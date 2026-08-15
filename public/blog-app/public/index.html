@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevBlog — Management Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --secondary: #e2e8f0;
+      --secondary-hover: #cbd5e1;
+      --secondary-text: #334155;
+      --border-color: #e2e8f0;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg-color); color: var(--text-main); font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1.6; }
+    header { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); color: #fff; padding: 1.25rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+    .brand { display: flex; align-items: center; gap: 0.75rem; font-size: 1.35rem; font-weight: 700; }
+    .brand-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+
+    .switch-container { display: flex; align-items: center; gap: 0.75rem; font-size: 0.875rem; color: #94a3b8; cursor: pointer; }
+    .switch { position: relative; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .25s ease; border-radius: 24px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .25s ease; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    .container { max-width: 860px; margin: 2.5rem auto; padding: 0 1.25rem; }
+    .card { background: var(--card-bg); border-radius: var(--radius); padding: 2rem; margin-bottom: 1.5rem; border: 1px solid var(--border-color); box-shadow: var(--shadow); }
+    h2 { font-size: 1.5rem; font-weight: 700; }
+    
+    .btn { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--primary); color: #fff; border: none; padding: 0.625rem 1.25rem; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.15s ease; }
+    .btn:hover { background: var(--primary-hover); }
+    .btn-danger { background: var(--danger); }
+    .btn-danger:hover { background: var(--danger-hover); }
+    .btn-secondary { background: var(--secondary); color: var(--secondary-text); }
+    .btn-secondary:hover { background: var(--secondary-hover); }
+
+    form { display: flex; flex-direction: column; gap: 1rem; }
+    input[type="text"], textarea { padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; font-family: inherit; width: 100%; }
+    
+    .hp-field { display: none !important; }
+
+    .actions { display: flex; gap: 0.75rem; margin-top: 0.5rem; align-items: center; }
+    .meta-badge { display: flex; gap: 0.75rem; font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 0.75rem; align-items: center; flex-wrap: wrap; }
+    .stat-pill { background: #f1f5f9; padding: 0.2rem 0.6rem; border-radius: 20px; font-weight: 600; color: #475569; }
+
+    /* Search & Filter Bar */
+    .filter-bar { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .search-input { flex: 1; min-width: 240px; }
+    
+    /* Tag Pills */
+    .tag-pill {
+      display: inline-block;
+      background: #e0e7ff;
+      color: #3730a3;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .tag-pill:hover { background: #c7d2fe; }
+    .active-filter-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #f1f5f9;
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: var(--secondary-text);
+      margin-bottom: 1rem;
+    }
+    .clear-filter-btn { background: none; border: none; color: var(--danger); font-weight: 700; cursor: pointer; }
+
+    .comments-section { margin-top: 2.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
+    .comment-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-top: 1rem; }
+    .comment-item.reply { margin-left: 2rem; border-left: 3px solid var(--primary); }
+    .comment-meta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; display: flex; justify-content: space-between; }
+    .reply-btn { background: none; border: none; color: var(--primary); font-size: 0.8rem; font-weight: 600; cursor: pointer; margin-top: 0.5rem; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand"><div class="brand-icon">✍️</div><span>DevBlog</span></div>
+    <label class="switch-container">
+      <span>Admin Mode</span>
+      <div class="switch"><input type="checkbox" id="authCheck" onchange="toggleAuth()"><span class="slider"></span></div>
+    </label>
+  </header>
+
+  <div class="container">
+
+    <!-- Post Form View -->
+    <div id="formSection" class="card hidden">
+      <h2 id="formTitle">Create New Post</h2>
+      <form id="postForm" onsubmit="handleFormSubmit(event)">
+        <input type="hidden" id="postId">
+        <input type="text" id="postTitle" placeholder="Title" required>
+        <input type="text" id="postAuthor" placeholder="Author" required>
+        <input type="text" id="postTags" placeholder="Tags (comma separated, e.g. webdev, design, nodejs)">
+        <textarea id="postContent" rows="6" placeholder="Content..." required></textarea>
+        <div class="actions">
+          <button type="submit" class="btn">Save</button>
+          <button type="button" class="btn btn-secondary" onclick="showHomeView()">Cancel</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Article Detail View -->
+    <div id="detailSection" class="card hidden">
+      <h2 id="detailTitle" style="font-size: 2rem;"></h2>
+      <div class="meta-badge" id="detailMeta"></div>
+      <div id="detailTags" style="margin-bottom: 1rem;"></div>
+      
+      <div class="actions" style="margin-bottom: 1.5rem;">
+        <button class="btn btn-secondary" id="likeBtn" onclick="likeCurrentPost()">👏 <span id="likeCount">0</span> Claps</button>
+        <span class="stat-pill" id="viewCount">👁️ 0 Views</span>
+      </div>
+
+      <p id="detailContent" style="white-space: pre-wrap; color: #334155; line-height: 1.8;"></p>
+      
+      <div class="actions" style="margin-top: 2rem;">
+        <button class="btn btn-secondary" onclick="showHomeView()">← Back to Articles</button>
+      </div>
+
+      <!-- Comments Section -->
+      <div class="comments-section">
+        <h3>Discussion</h3>
+        <form id="commentForm" onsubmit="handleCommentSubmit(event)" style="margin-top: 1rem;">
+          <input type="hidden" id="replyParentId">
+          <input type="text" name="website" id="hpWebsite" class="hp-field" tabindex="-1" autocomplete="off">
+          
+          <div id="replyingNotice" class="hidden" style="font-size: 0.85rem; color: var(--primary); margin-bottom: -0.5rem;">
+            Replying to comment... <button type="button" onclick="cancelReply()" style="background:none; border:none; color:var(--danger); cursor:pointer;">Cancel</button>
+          </div>
+          
+          <input type="text" id="commentAuthor" placeholder="Your Name" required>
+          <textarea id="commentContent" rows="3" placeholder="Write a comment... (No links allowed)" required></textarea>
+          <div>
+            <button type="submit" class="btn">Post Comment</button>
+          </div>
+        </form>
+
+        <div id="commentsTree" style="margin-top: 1.5rem;"></div>
+      </div>
+    </div>
+
+    <!-- Posts List View -->
+    <div id="homeSection">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>Latest Articles</h2>
+        <button id="createBtn" class="btn hidden" onclick="showFormView()">+ New Article</button>
+      </div>
+
+      <!-- Live Search Bar -->
+      <div class="filter-bar">
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search articles by title, content, or tag..." oninput="handleSearchInput()">
+      </div>
+
+      <div id="activeFilterNotice" class="active-filter-badge hidden">
+        <span>Filtering by tag: <strong id="activeTagLabel"></strong></span>
+        <button class="clear-filter-btn" onclick="clearTagFilter()">✕ Clear</button>
+      </div>
+
+      <div id="postsList"></div>
+    </div>
+
+  </div>
+
+  <script>
+    let isAuthorized = false;
+    let currentPostId = null;
+    let activeTag = '';
+    let searchTimeout = null;
+    const API_URL = '/api/posts';
+
+    function toggleAuth() {
+      isAuthorized = document.getElementById('authCheck').checked;
+      renderApp();
+    }
+
+    function getAuthHeaders() {
+      return isAuthorized ? { 'Authorization': 'Bearer secret-admin-token', 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+    }
+
+    function handleSearchInput() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        fetchPosts();
+      }, 250);
+    }
+
+    function filterByTag(tagName) {
+      activeTag = tagName;
+      document.getElementById('activeTagLabel').innerText = `#${tagName}`;
+      document.getElementById('activeFilterNotice').classList.remove('hidden');
+      fetchPosts();
+    }
+
+    function clearTagFilter() {
+      activeTag = '';
+      document.getElementById('activeFilterNotice').classList.add('hidden');
+      fetchPosts();
+    }
+
+    async function fetchPosts() {
+      const searchVal = document.getElementById('searchInput').value;
+      const params = new URLSearchParams();
+      if (searchVal) params.append('search', searchVal);
+      if (activeTag) params.append('tag', activeTag);
+
+      const res = await fetch(`${API_URL}?${params.toString()}`);
+      const posts = await res.json();
+      const list = document.getElementById('postsList');
+      
+      if (posts.length === 0) {
+        list.innerHTML = '<div class="card">No articles matched your search query or tag filter.</div>';
+        return;
+      }
+
+      list.innerHTML = posts.map(post => {
+        const tagList = (post.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+        const tagHtml = tagList.map(t => `<span class="tag-pill" onclick="event.stopPropagation(); filterByTag('${escapeHtml(t)}')">#${escapeHtml(t)}</span>`).join(' ');
+
+        return `
+          <div class="card">
+            <h3>${escapeHtml(post.title)}</h3>
+            <div class="meta-badge">
+              <span>By <strong>${escapeHtml(post.author)}</strong></span>
+              <span class="stat-pill">👏 ${post.likes || 0}</span>
+              <span class="stat-pill">👁️ ${post.views || 0}</span>
+            </div>
+            ${tagHtml ? `<div style="margin-bottom: 0.75rem;">${tagHtml}</div>` : ''}
+            <p style="color: var(--text-muted); margin-bottom: 1.25rem;">${escapeHtml(post.content.substring(0, 150))}...</p>
+            <div class="actions">
+              <button class="btn btn-secondary" onclick="viewPost(${post.id})">Read Article</button>
+              ${isAuthorized ? `
+                <button class="btn" onclick="editPost(${post.id})">Edit</button>
+                <button class="btn btn-danger" onclick="deletePost(${post.id})">Delete</button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function viewPost(id) {
+      currentPostId = id;
+      const res = await fetch(`${API_URL}/${id}`);
+      const post = await res.json();
+      
+      document.getElementById('detailTitle').innerText = post.title;
+      document.getElementById('detailMeta').innerHTML = `By <strong>${escapeHtml(post.author)}</strong> • ${new Date(post.createdAt).toLocaleDateString()}`;
+      document.getElementById('detailContent').innerText = post.content;
+      document.getElementById('likeCount').innerText = post.likes || 0;
+      document.getElementById('viewCount').innerText = `👁️ ${post.views || 0} Views`;
+
+      const tagList = (post.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+      document.getElementById('detailTags').innerHTML = tagList.map(t => `<span class="tag-pill" onclick="showHomeView(); filterByTag('${escapeHtml(t)}')">#${escapeHtml(t)}</span>`).join(' ');
+
+      document.getElementById('homeSection').classList.add('hidden');
+      document.getElementById('formSection').classList.add('hidden');
+      document.getElementById('detailSection').classList.remove('hidden');
+
+      cancelReply();
+      loadComments(id);
+    }
+
+    async function likeCurrentPost() {
+      if (!currentPostId) return;
+      const res = await fetch(`${API_URL}/${currentPostId}/like`, { method: 'POST' });
+      const data = await res.json();
+      document.getElementById('likeCount').innerText = data.likes;
+    }
+
+    async function loadComments(postId) {
+      const res = await fetch(`${API_URL}/${postId}/comments`);
+      const comments = await res.json();
+      const container = document.getElementById('commentsTree');
+
+      if (comments.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem;">No comments yet. Be the first!</p>';
+        return;
+      }
+
+      const commentMap = {};
+      const rootComments = [];
+
+      comments.forEach(c => {
+        c.children = [];
+        commentMap[c.id] = c;
+        if (c.parent_id) {
+          if (commentMap[c.parent_id]) commentMap[c.parent_id].children.push(c);
+        } else {
+          rootComments.push(c);
+        }
+      });
+
+      function renderComment(c, isChild = false) {
+        return `
+          <div class="comment-item ${isChild ? 'reply' : ''}">
+            <div class="comment-meta">
+              <strong>${escapeHtml(c.author)}</strong>
+              <span>${new Date(c.createdAt).toLocaleDateString()}</span>
+            </div>
+            <p style="font-size:0.95rem;">${escapeHtml(c.content)}</p>
+            <button class="reply-btn" onclick="setReplyTarget(${c.id})">Reply</button>
+            ${c.children.map(child => renderComment(child, true)).join('')}
+          </div>
+        `;
+      }
+
+      container.innerHTML = rootComments.map(c => renderComment(c)).join('');
+    }
+
+    function setReplyTarget(parentId) {
+      document.getElementById('replyParentId').value = parentId;
+      document.getElementById('replyingNotice').classList.remove('hidden');
+      document.getElementById('commentContent').focus();
+    }
+
+    function cancelReply() {
+      document.getElementById('replyParentId').value = '';
+      document.getElementById('replyingNotice').classList.add('hidden');
+    }
+
+    async function handleCommentSubmit(e) {
+      e.preventDefault();
+      const author = document.getElementById('commentAuthor').value;
+      const content = document.getElementById('commentContent').value;
+      const parent_id = document.getElementById('replyParentId').value;
+      const website = document.getElementById('hpWebsite').value;
+
+      const res = await fetch(`${API_URL}/${currentPostId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ author, content, parent_id, website })
+      });
+
+      if (res.ok) {
+        document.getElementById('commentContent').value = '';
+        cancelReply();
+        loadComments(currentPostId);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to submit comment');
+      }
+    }
+
+    function showFormView(post = null) {
+      document.getElementById('homeSection').classList.add('hidden');
+      document.getElementById('detailSection').classList.add('hidden');
+      document.getElementById('formSection').classList.remove('hidden');
+
+      if (post) {
+        document.getElementById('formTitle').innerText = 'Edit Article';
+        document.getElementById('postId').value = post.id;
+        document.getElementById('postTitle').value = post.title;
+        document.getElementById('postAuthor').value = post.author;
+        document.getElementById('postTags').value = post.tags || '';
+        document.getElementById('postContent').value = post.content;
+      } else {
+        document.getElementById('formTitle').innerText = 'Create New Article';
+        document.getElementById('postForm').reset();
+        document.getElementById('postId').value = '';
+      }
+    }
+
+    function showHomeView() {
+      document.getElementById('homeSection').classList.remove('hidden');
+      document.getElementById('formSection').classList.add('hidden');
+      document.getElementById('detailSection').classList.add('hidden');
+      fetchPosts();
+    }
+
+    async function editPost(id) {
+      const res = await fetch(`${API_URL}/${id}`);
+      const post = await res.json();
+      showFormView(post);
+    }
+
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('postId').value;
+      const title = document.getElementById('postTitle').value;
+      const author = document.getElementById('postAuthor').value;
+      const tags = document.getElementById('postTags').value;
+      const content = document.getElementById('postContent').value;
+
+      const method = id ? 'PUT' : 'POST';
+      const url = id ? `${API_URL}/${id}` : API_URL;
+
+      const res = await fetch(url, {
+        method,
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ title, author, content, tags })
+      });
+
+      if (res.ok) {
+        showHomeView();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Operation failed');
+      }
+    }
+
+    async function deletePost(id) {
+      if (!confirm('Are you sure you want to delete this article?')) return;
+      const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+      if (res.ok) fetchPosts();
+      else alert((await res.json()).error || 'Delete failed');
+    }
+
+    function renderApp() {
+      document.getElementById('createBtn').classList.toggle('hidden', !isAuthorized);
+      fetchPosts();
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+    }
+
+    renderApp();
+  </script>
+</body>
+</html>

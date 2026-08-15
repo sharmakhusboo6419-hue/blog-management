@@ -1,6 +1,6 @@
 {
   "sessionId": "ses_ff9df3ac4ffe6Y9exWFqoJF7xx",
-  "exportedAt": 1786815064407,
+  "exportedAt": 1786815842577,
   "sessionData": {
     "type": "sessionData",
     "sessionId": "ses_ff9df3ac4ffe6Y9exWFqoJF7xx",
@@ -165,6 +165,23 @@
           "processingStartedAt": 1786814901150,
           "processingCompletedAt": 1786815062251
         }
+      },
+      {
+        "role": "user",
+        "id": "msg_0067c8cfc001vNxYOodXSHHx6B",
+        "text": "Aug 15 23:02:43.77\nGET\n500\nblog-management-flax-psi.vercel.app\n/\nError: /lib64/libm.so.6: version `GLIBC_2.38' not found (required by /var/task/node_modules/sqlite3/build/Release/node_sqlite3.node)\n \n    at Object..node (node:internal/modules/cjs/loader:2029:18)\n \n    at Module.load (node:internal/modules/cjs/loader:1594:32)\n \n    at Module.<anonymous> (node:internal/modules/cjs/loader:1396:12)\n \n    at /opt/rust/nodejs.js:2:14275\n \n    at Module.yo (/opt/rust/nodejs.js:2:14653)\n \n    at e.<computed>.dt._load (/opt/rust/nodejs.js:2:14245)\n \n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n \n    at Module.require (node:internal/modules/cjs/loader:1617:12)\n \n    at s (/opt/rust/bytecode.js:2:1110)\n \n    at bindings (/var/task/node_modules/bindings/bindings.js:112:48) {\n \n  code: 'ERR_DLOPEN_FAILED'\n \n}\n \nNode.js process exited with exit status: 1. The logs above can help with debugging the issue.\nAug 15 23:02:20.61\nGET\n500\nblog-management-pffbesmf8-sharmakhusboo6419-hues-projects.vercel.app\n/\nError: /lib64/libm.so.6: version `GLIBC_2.38' not found (required by /var/task/node_modules/sqlite3/build/Release/node_sqlite3.node)\n \n    at Object..node (node:internal/modules/cjs/loader:2029:18)\n \n    at Module.load (node:internal/modules/cjs/loader:1594:32)\n \n    at Module.<anonymous> (node:internal/modules/cjs/loader:1396:12)\n \n    at /opt/rust/nodejs.js:2:14275\n \n    at Module.yo (/opt/rust/nodejs.js:2:14653)\n \n    at e.<computed>.dt._load (/opt/rust/nodejs.js:2:14245)\n \n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n \n    at Module.require (node:internal/modules/cjs/loader:1617:12)\n \n    at s (/opt/rust/bytecode.js:2:1110)\n \n    at bindings (/var/task/node_modules/bindings/bindings.js:112:48) {\n \n  code: 'ERR_DLOPEN_FAILED'\n \n}\n \nNode.js process exited with exit status: 1. The logs above can help with debugging the issue.\nAug 15 23:02:20.34\nGET\n500\nblog-management-pffbesmf8-sharmakhusboo6419-hues-projects.vercel.app\n/\nError: /lib64/libm.so.6: version `GLIBC_2.38' not found (required by /var/task/node_modules/sqlite3/build/Release/node_sqlite3.node)\n \n    at Object..node (node:internal/modules/cjs/loader:2029:18)\n \n    at Module.load (node:internal/modules/cjs/loader:1594:32)\n \n    at Module.<anonymous> (node:internal/modules/cjs/loader:1396:12)\n \n    at /opt/rust/nodejs.js:2:14275\n \n    at Module.yo (/opt/rust/nodejs.js:2:14653)\n \n    at e.<computed>.dt._load (/opt/rust/nodejs.js:2:14245)\n \n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n \n    at Module.require (node:internal/modules/cjs/loader:1617:12)\n \n    at s (/opt/rust/bytecode.js:2:1110)\n \n    at bindings (/var/task/node_modules/bindings/bindings.js:112:48) {\n \n  code: 'ERR_DLOPEN_FAILED'\n \n}\n \nNode.js process exited with exit status: 1. The logs above can help with debugging the issue.\nAug 15 23:02:16.53\nGET\n500\nblog-management-pffbesmf8-sharmakhusboo6419-hues-projects.vercel.app\n/\nError: /lib64/libm.so.6: version `GLIBC_2.38' not found (required by /var/task/node_modules/sqlite3/build/Release/node_sqlite3.node)\n \n    at Object..node (node:internal/modules/cjs/loader:2029:18)\n \n    at Module.load (node:internal/modules/cjs/loader:1594:32)\n \n    at Module.<anonymous> (node:internal/modules/cjs/loader:1396:12)\n \n    at /opt/rust/nodejs.js:2:14275\n \n    at Module.yo (/opt/rust/nodejs.js:2:14653)\n \n    at e.<computed>.dt._load (/opt/rust/nodejs.js:2:14245)\n \n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n \n    at Module.require (node:internal/modules/cjs/loader:1617:12)\n \n    at s (/opt/rust/bytecode.js:2:1110)\n \n    at bindings (/var/task/node_modules/bindings/bindings.js:112:48) {\n \n  code: 'ERR_DLOPEN_FAILED'\n \n}\n \nNode.js process exited with exit status: 1. The logs above can help with debugging the issue.",
+        "messageIndex": 19
+      },
+      {
+        "role": "assistant",
+        "id": "msg_00685e2e5001MUbAVGdCzdKK6P",
+        "text": "Committed and ready to deploy.\n\n**What was wrong this time:** The `sqlite3` native binary was compiled against **glibc 2.38**, but Vercel's runtime only has an older glibc — so the `.node` binary failed to load (`ERR_DLOPEN_FAILED`). This is inherent to any native SQLite module on Vercel.\n\n**The fix:** Switched to **sql.js** — the real SQLite engine compiled to **WebAssembly**. No native binaries, no glibc dependency, no bundler shims. Same SQL, same behavior.\n\nWhat changed in `server.js` (both copies) + `package.json`:\n- Replaced `sqlite3` with `sql.js`, loaded via `createRequire` so Vercel's bundler leaves it external (the wasm file ships in `node_modules`)\n- Data layer rewritten to sql.js's synchronous API; still uses `/tmp/blog.db` on Vercel (persists across warm invocations, resets on cold start), and a `ready` middleware ensures the DB is initialized before any request\n- Persists to the DB file on every write\n\n**Verified locally:** full CRUD (200/201/200/200/401/400), persistence across restart, and an esbuild bundle reproduces the Vercel build — sql.js stays external, wasm file present, no broken shim.\n\nPush to redeploy:\n```\ngit push origin main\n```\n\nThe local preview at `http://localhost:3000` is back up on the new code. This is the reliable setup for Vercel — if you later want posts to survive cold starts, we'd add Turso/Postgres.",
+        "messageIndex": 20,
+        "meta": {
+          "processingStartedAt": 1786815220959,
+          "processingCompletedAt": 1786815840505,
+          "processingPausedMs": 25760
+        }
       }
     ],
     "segments": [],
@@ -187,7 +204,9 @@
         "msg_0066c31b6001CA1cDbtc5Tcnuj",
         "msg_0067530ea001qAHoJMiwLestRT",
         "msg_00677abbd001k4rib8S54AfXh8",
-        "msg_0067a088c001nwbNNyEW3Q5xqW"
+        "msg_0067a088c001nwbNNyEW3Q5xqW",
+        "msg_0067c8cfc001vNxYOodXSHHx6B",
+        "msg_00685e2e5001MUbAVGdCzdKK6P"
       ],
       "segmentBackingMessageIds": []
     }

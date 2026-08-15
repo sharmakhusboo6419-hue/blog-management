@@ -1,6 +1,12 @@
+const { createRequire } = require('module');
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+
+// Load sqlite3 via createRequire so Vercel's bundler leaves the native
+// module external. Bundling sqlite3 breaks its runtime exports
+// (TypeError: ...default.verbose is not a function).
+const localRequire = createRequire(__filename);
+const sqlite3 = localRequire('sqlite3').verbose();
 
 const app = express();
 

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog Management</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+    body { background: #f4f6f8; color: #333; line-height: 1.6; }
+    header { background: #1e293b; color: #fff; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+    .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    .card { background: #fff; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .btn { background: #2563eb; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; text-decoration: none; }
+    .btn-danger { background: #dc2626; }
+    .btn-secondary { background: #64748b; }
+    form { display: flex; flex-direction: column; gap: 1rem; }
+    input, textarea { padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 4px; width: 100%; }
+    .actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+    .hidden { display: none !important; }
+    .auth-toggle { font-size: 0.9rem; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>DevBlog</h1>
+    <div>
+      <label class="auth-toggle">
+        <input type="checkbox" id="authCheck" onchange="toggleAuth()"> Authorize Admin Mode
+      </label>
+    </div>
+  </header>
+
+  <div class="container">
+    <div id="alert" class="card hidden"></div>
+
+    <!-- Create/Edit Form View -->
+    <div id="formSection" class="card hidden">
+      <h2 id="formTitle">Create New Post</h2>
+      <form id="postForm" onsubmit="handleFormSubmit(event)">
+        <input type="hidden" id="postId">
+        <input type="text" id="postTitle" placeholder="Post Title" required>
+        <input type="text" id="postAuthor" placeholder="Author Name" required>
+        <textarea id="postContent" rows="6" placeholder="Write content here..." required></textarea>
+        <div class="actions">
+          <button type="submit" class="btn">Save Post</button>
+          <button type="button" class="btn btn-secondary" onclick="showHomeView()">Cancel</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Single Post Detail View -->
+    <div id="detailSection" class="card hidden">
+      <h2 id="detailTitle"></h2>
+      <p><small id="detailMeta" style="color:#64748b"></small></p>
+      <hr style="margin: 1rem 0; border: none; border-top: 1px solid #e2e8f0;">
+      <p id="detailContent" style="white-space: pre-wrap;"></p>
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="showHomeView()">Back</button>
+      </div>
+    </div>
+
+    <!-- Post List View -->
+    <div id="homeSection">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>Recent Posts</h2>
+        <button id="createBtn" class="btn hidden" onclick="showFormView()">+ New Post</button>
+      </div>
+      <div id="postsList"></div>
+    </div>
+  </div>
+
+  <script>
+    let isAuthorized = false;
+    const API_URL = '/api/posts';
+
+    function toggleAuth() {
+      isAuthorized = document.getElementById('authCheck').checked;
+      renderApp();
+    }
+
+    function getAuthHeaders() {
+      return isAuthorized ? { 'Authorization': 'Bearer secret-admin-token', 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+    }
+
+    async function fetchPosts() {
+      const res = await fetch(API_URL);
+      const posts = await res.json();
+      const list = document.getElementById('postsList');
+      
+      if (posts.length === 0) {
+        list.innerHTML = '<div class="card">No posts available yet.</div>';
+        return;
+      }
+
+      list.innerHTML = posts.map(post => `
+        <div class="card">
+          <h3>${escapeHtml(post.title)}</h3>
+          <p><small style="color:#64748b">By ${escapeHtml(post.author)} on ${new Date(post.createdAt).toLocaleDateString()}</small></p>
+          <p>${escapeHtml(post.content.substring(0, 150))}...</p>
+          <div class="actions">
+            <button class="btn btn-secondary" onclick="viewPost(${post.id})">Read More</button>
+            ${isAuthorized ? `
+              <button class="btn" onclick="editPost(${post.id})">Edit</button>
+              <button class="btn btn-danger" onclick="deletePost(${post.id})">Delete</button>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function viewPost(id) {
+      const res = await fetch(`${API_URL}/${id}`);
+      const post = await res.json();
+      
+      document.getElementById('detailTitle').innerText = post.title;
+      document.getElementById('detailMeta').innerText = `By ${post.author} on ${new Date(post.createdAt).toLocaleString()}`;
+      document.getElementById('detailContent').innerText = post.content;
+
+      document.getElementById('homeSection').classList.add('hidden');
+      document.getElementById('formSection').classList.add('hidden');
+      document.getElementById('detailSection').classList.remove('hidden');
+    }
+
+    function showFormView(post = null) {
+      document.getElementById('homeSection').classList.add('hidden');
+      document.getElementById('detailSection').classList.add('hidden');
+      document.getElementById('formSection').classList.remove('hidden');
+
+      if (post) {
+        document.getElementById('formTitle').innerText = 'Edit Post';
+        document.getElementById('postId').value = post.id;
+        document.getElementById('postTitle').value = post.title;
+        document.getElementById('postAuthor').value = post.author;
+        document.getElementById('postContent').value = post.content;
+      } else {
+        document.getElementById('formTitle').innerText = 'Create New Post';
+        document.getElementById('postForm').reset();
+        document.getElementById('postId').value = '';
+      }
+    }
+
+    function showHomeView() {
+      document.getElementById('homeSection').classList.remove('hidden');
+      document.getElementById('formSection').classList.add('hidden');
+      document.getElementById('detailSection').classList.add('hidden');
+      fetchPosts();
+    }
+
+    async function editPost(id) {
+      const res = await fetch(`${API_URL}/${id}`);
+      const post = await res.json();
+      showFormView(post);
+    }
+
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('postId').value;
+      const title = document.getElementById('postTitle').value;
+      const author = document.getElementById('postAuthor').value;
+      const content = document.getElementById('postContent').value;
+
+      const method = id ? 'PUT' : 'POST';
+      const url = id ? `${API_URL}/${id}` : API_URL;
+
+      const res = await fetch(url, {
+        method,
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ title, author, content })
+      });
+
+      if (res.ok) {
+        showHomeView();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Operation failed');
+      }
+    }
+
+    async function deletePost(id) {
+      if (!confirm('Are you sure you want to delete this post?')) return;
+      
+      const res = await fetch(`${API_URL}/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+
+      if (res.ok) {
+        fetchPosts();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Delete failed');
+      }
+    }
+
+    function renderApp() {
+      document.getElementById('createBtn').classList.toggle('hidden', !isAuthorized);
+      fetchPosts();
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+
+    renderApp();
+  </script>
+</body>
+</html>

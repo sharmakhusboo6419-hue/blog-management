@@ -1,0 +1,9 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = true
+	autocrlf = false
+[advice]
+	detachedHead = false
+[gc]
+	auto = 0

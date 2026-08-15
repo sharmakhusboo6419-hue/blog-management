@@ -4,3 +4,26 @@
 # exclude patterns (uncomment them if you want to use them):
 # *.[oa]
 # *~
+
+# >>> opencode:workspace-gitignore >>>
+# Dependencies
+node_modules/
+
+# SQLite database files
+*.db
+*.db-journal
+
+# Vercel / local env
+.vercel/
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.DS_Store
+*.log
+npm-debug.log*
+
+# AI tooling
+.opencode/
+# <<< opencode:workspace-gitignore <<<

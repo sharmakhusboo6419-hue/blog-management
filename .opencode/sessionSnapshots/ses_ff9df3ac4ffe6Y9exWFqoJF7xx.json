@@ -1,6 +1,6 @@
 {
   "sessionId": "ses_ff9df3ac4ffe6Y9exWFqoJF7xx",
-  "exportedAt": 1786812194089,
+  "exportedAt": 1786814749126,
   "sessionData": {
     "type": "sessionData",
     "sessionId": "ses_ff9df3ac4ffe6Y9exWFqoJF7xx",
@@ -132,6 +132,23 @@
           "processingStartedAt": 1786812153528,
           "processingCompletedAt": 1786812192220
         }
+      },
+      {
+        "role": "user",
+        "id": "msg_0066c31b6001CA1cDbtc5Tcnuj",
+        "text": "This Serverless Function has crashed.\n\nYour connection is working correctly.\n\nVercel is working correctly.\n\n500: INTERNAL_SERVER_ERROR\nCode: FUNCTION_INVOCATION_FAILED\nID: bom1::hk4hx-1786813447131-a8d64de7b707\n\nIf you are a visitor, contact the website owner or try again later.\nIf you are the owner, learn how to fix the error and check the logs.",
+        "messageIndex": 15
+      },
+      {
+        "role": "assistant",
+        "id": "msg_0067530ea001qAHoJMiwLestRT",
+        "text": "Fixed. The crash had three serverless-hostile things, all now corrected:\n\n**Root causes**\n1. `node_modules` and `blog.db` were committed to git — Vercel loaded the `sqlite3` native binary built for your machine, which can't run in their Lambda runtime.\n2. `server.js` called `app.listen()` — serverless needs the app exported as a handler.\n3. SQLite wrote to `./blog.db` — read-only outside `/tmp` on Vercel.\n\n**Changes**\n- Root is now the deployable app: `package.json`, serverless-compatible `server.js` (exports `app`, listens only when run via `node server.js`), `api/index.js`, `vercel.json` (rewrites all traffic to the function), `.gitignore`\n- DB uses `/tmp/blog.db` on Vercel (`process.env.VERCEL`), local `./blog.db` otherwise\n- Stylish UI moved from `blog-app/public/` → root `public/`; old root `index.html` removed\n- `blog-app/` also patched (same serverless pattern + its own `vercel.json`/`api/index.js`), and its `node_modules` + `blog.db` untracked from git\n- Verified locally: GET/POST/PUT/DELETE all work, unauthorized returns 401, static assets serve\n\n**To deploy**\n1. `git push origin main` (an auto-commit captured the restructure)\n2. In Vercel, set **Root Directory** to the repo root (blank) and redeploy\n3. Note: posts reset whenever the function cold-starts — expected with SQLite in `/tmp`. For persistence later, we can swap in Turso/Postgres.\n\nThe local server on `:3000` still runs the `blog-app` copy; the new canonical app runs from the root (`node server.js`).",
+        "messageIndex": 16,
+        "meta": {
+          "processingStartedAt": 1786814133688,
+          "processingCompletedAt": 1786814747048,
+          "processingPausedMs": 33093
+        }
       }
     ],
     "segments": [],
@@ -150,7 +167,9 @@
         "msg_0064b6ce4001LEam5SL88VU1pG",
         "msg_0064bbc17001M6cMOPDaVOntk5",
         "msg_0064dbecc001PzUiUYSbU1x6dE",
-        "msg_0064e4a85001z9qXNzUizpsjCY"
+        "msg_0064e4a85001z9qXNzUizpsjCY",
+        "msg_0066c31b6001CA1cDbtc5Tcnuj",
+        "msg_0067530ea001qAHoJMiwLestRT"
       ],
       "segmentBackingMessageIds": []
     }

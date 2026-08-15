@@ -53,14 +53,42 @@
     form { display: flex; flex-direction: column; gap: 1rem; }
     input[type="text"], textarea { padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; font-family: inherit; width: 100%; }
     
-    /* Honeypot field (hidden from human users) */
     .hp-field { display: none !important; }
 
     .actions { display: flex; gap: 0.75rem; margin-top: 0.5rem; align-items: center; }
-    .meta-badge { display: flex; gap: 1rem; font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 1rem; align-items: center; }
+    .meta-badge { display: flex; gap: 0.75rem; font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 0.75rem; align-items: center; flex-wrap: wrap; }
     .stat-pill { background: #f1f5f9; padding: 0.2rem 0.6rem; border-radius: 20px; font-weight: 600; color: #475569; }
 
-    /* Nested Comments styling */
+    /* Search & Filter Bar */
+    .filter-bar { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .search-input { flex: 1; min-width: 240px; }
+    
+    /* Tag Pills */
+    .tag-pill {
+      display: inline-block;
+      background: #e0e7ff;
+      color: #3730a3;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .tag-pill:hover { background: #c7d2fe; }
+    .active-filter-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #f1f5f9;
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: var(--secondary-text);
+      margin-bottom: 1rem;
+    }
+    .clear-filter-btn { background: none; border: none; color: var(--danger); font-weight: 700; cursor: pointer; }
+
     .comments-section { margin-top: 2.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
     .comment-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-top: 1rem; }
     .comment-item.reply { margin-left: 2rem; border-left: 3px solid var(--primary); }
@@ -89,6 +117,7 @@
         <input type="hidden" id="postId">
         <input type="text" id="postTitle" placeholder="Title" required>
         <input type="text" id="postAuthor" placeholder="Author" required>
+        <input type="text" id="postTags" placeholder="Tags (comma separated, e.g. webdev, design, nodejs)">
         <textarea id="postContent" rows="6" placeholder="Content..." required></textarea>
         <div class="actions">
           <button type="submit" class="btn">Save</button>
@@ -97,10 +126,11 @@
       </form>
     </div>
 
-    <!-- Article View with Clap Counter & Comments -->
+    <!-- Article Detail View -->
     <div id="detailSection" class="card hidden">
       <h2 id="detailTitle" style="font-size: 2rem;"></h2>
       <div class="meta-badge" id="detailMeta"></div>
+      <div id="detailTags" style="margin-bottom: 1rem;"></div>
       
       <div class="actions" style="margin-bottom: 1.5rem;">
         <button class="btn btn-secondary" id="likeBtn" onclick="likeCurrentPost()">👏 <span id="likeCount">0</span> Claps</button>
@@ -116,11 +146,8 @@
       <!-- Comments Section -->
       <div class="comments-section">
         <h3>Discussion</h3>
-        
-        <!-- Comment Form -->
         <form id="commentForm" onsubmit="handleCommentSubmit(event)" style="margin-top: 1rem;">
           <input type="hidden" id="replyParentId">
-          <!-- Honeypot anti-spam input -->
           <input type="text" name="website" id="hpWebsite" class="hp-field" tabindex="-1" autocomplete="off">
           
           <div id="replyingNotice" class="hidden" style="font-size: 0.85rem; color: var(--primary); margin-bottom: -0.5rem;">
@@ -140,10 +167,21 @@
 
     <!-- Posts List View -->
     <div id="homeSection">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
         <h2>Latest Articles</h2>
         <button id="createBtn" class="btn hidden" onclick="showFormView()">+ New Article</button>
       </div>
+
+      <!-- Live Search Bar -->
+      <div class="filter-bar">
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search articles by title, content, or tag..." oninput="handleSearchInput()">
+      </div>
+
+      <div id="activeFilterNotice" class="active-filter-badge hidden">
+        <span>Filtering by tag: <strong id="activeTagLabel"></strong></span>
+        <button class="clear-filter-btn" onclick="clearTagFilter()">✕ Clear</button>
+      </div>
+
       <div id="postsList"></div>
     </div>
 
@@ -152,6 +190,8 @@
   <script>
     let isAuthorized = false;
     let currentPostId = null;
+    let activeTag = '';
+    let searchTimeout = null;
     const API_URL = '/api/posts';
 
     function toggleAuth() {
@@ -163,34 +203,65 @@
       return isAuthorized ? { 'Authorization': 'Bearer secret-admin-token', 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
     }
 
+    function handleSearchInput() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        fetchPosts();
+      }, 250);
+    }
+
+    function filterByTag(tagName) {
+      activeTag = tagName;
+      document.getElementById('activeTagLabel').innerText = `#${tagName}`;
+      document.getElementById('activeFilterNotice').classList.remove('hidden');
+      fetchPosts();
+    }
+
+    function clearTagFilter() {
+      activeTag = '';
+      document.getElementById('activeFilterNotice').classList.add('hidden');
+      fetchPosts();
+    }
+
     async function fetchPosts() {
-      const res = await fetch(API_URL);
+      const searchVal = document.getElementById('searchInput').value;
+      const params = new URLSearchParams();
+      if (searchVal) params.append('search', searchVal);
+      if (activeTag) params.append('tag', activeTag);
+
+      const res = await fetch(`${API_URL}?${params.toString()}`);
       const posts = await res.json();
       const list = document.getElementById('postsList');
       
       if (posts.length === 0) {
-        list.innerHTML = '<div class="card">No articles available yet.</div>';
+        list.innerHTML = '<div class="card">No articles matched your search query or tag filter.</div>';
         return;
       }
 
-      list.innerHTML = posts.map(post => `
-        <div class="card">
-          <h3>${escapeHtml(post.title)}</h3>
-          <div class="meta-badge">
-            <span>By <strong>${escapeHtml(post.author)}</strong></span>
-            <span class="stat-pill">👏 ${post.likes || 0}</span>
-            <span class="stat-pill">👁️ ${post.views || 0}</span>
+      list.innerHTML = posts.map(post => {
+        const tagList = (post.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+        const tagHtml = tagList.map(t => `<span class="tag-pill" onclick="event.stopPropagation(); filterByTag('${escapeHtml(t)}')">#${escapeHtml(t)}</span>`).join(' ');
+
+        return `
+          <div class="card">
+            <h3>${escapeHtml(post.title)}</h3>
+            <div class="meta-badge">
+              <span>By <strong>${escapeHtml(post.author)}</strong></span>
+              <span class="stat-pill">👏 ${post.likes || 0}</span>
+              <span class="stat-pill">👁️ ${post.views || 0}</span>
+            </div>
+            ${tagHtml ? `<div style="margin-bottom: 0.75rem;">${tagHtml}</div>` : ''}
+            <p style="color: var(--text-muted); margin-bottom: 1.25rem;">${escapeHtml(post.content.substring(0, 150))}...</p>
+            <div class="actions">
+              <button class="btn btn-secondary" onclick="viewPost(${post.id})">Read Article</button>
+              ${isAuthorized ? `
+                <button class="btn" onclick="editPost(${post.id})">Edit</button>
+                <button class="btn btn-danger" onclick="deletePost(${post.id})">Delete</button>
+              ` : ''}
+            </div>
           </div>
-          <p style="color: var(--text-muted); margin-bottom: 1.25rem;">${escapeHtml(post.content.substring(0, 150))}...</p>
-          <div class="actions">
-            <button class="btn btn-secondary" onclick="viewPost(${post.id})">Read Article</button>
-            ${isAuthorized ? `
-              <button class="btn" onclick="editPost(${post.id})">Edit</button>
-              <button class="btn btn-danger" onclick="deletePost(${post.id})">Delete</button>
-            ` : ''}
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     async function viewPost(id) {
@@ -203,6 +274,9 @@
       document.getElementById('detailContent').innerText = post.content;
       document.getElementById('likeCount').innerText = post.likes || 0;
       document.getElementById('viewCount').innerText = `👁️ ${post.views || 0} Views`;
+
+      const tagList = (post.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+      document.getElementById('detailTags').innerHTML = tagList.map(t => `<span class="tag-pill" onclick="showHomeView(); filterByTag('${escapeHtml(t)}')">#${escapeHtml(t)}</span>`).join(' ');
 
       document.getElementById('homeSection').classList.add('hidden');
       document.getElementById('formSection').classList.add('hidden');
@@ -229,7 +303,6 @@
         return;
       }
 
-      // Build nested hierarchy
       const commentMap = {};
       const rootComments = [];
 
@@ -304,6 +377,7 @@
         document.getElementById('postId').value = post.id;
         document.getElementById('postTitle').value = post.title;
         document.getElementById('postAuthor').value = post.author;
+        document.getElementById('postTags').value = post.tags || '';
         document.getElementById('postContent').value = post.content;
       } else {
         document.getElementById('formTitle').innerText = 'Create New Article';
@@ -330,6 +404,7 @@
       const id = document.getElementById('postId').value;
       const title = document.getElementById('postTitle').value;
       const author = document.getElementById('postAuthor').value;
+      const tags = document.getElementById('postTags').value;
       const content = document.getElementById('postContent').value;
 
       const method = id ? 'PUT' : 'POST';
@@ -338,7 +413,7 @@
       const res = await fetch(url, {
         method,
         headers: getAuthHeaders(),
-        body: JSON.stringify({ title, author, content })
+        body: JSON.stringify({ title, author, content, tags })
       });
 
       if (res.ok) {

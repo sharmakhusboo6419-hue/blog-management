@@ -10,12 +10,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // sql.js is the real SQLite engine compiled to WebAssembly - no native
 // binaries, so it works on Vercel serverless (no glibc / bundler issues).
+// The .wasm binary is embedded (base64) directly in this bundle so the
+// bundler ships it inside the function instead of dropping the asset.
 const localRequire = createRequire(__filename);
-const initSqlJs = () =>
-  localRequire('sql.js')({
-    locateFile: (file) =>
-      path.join(path.dirname(localRequire.resolve('sql.js')), file),
-  });
+const wasmBinary = Buffer.from(require('./wasm-binary.js'), 'base64');
+const initSqlJs = () => localRequire('sql.js')({ wasmBinary });
 
 // SQLite needs a writable location. Vercel serverless functions only allow
 // writes under /tmp (and it is ephemeral - resets on cold start).
@@ -24,6 +23,7 @@ const DB_PATH = process.env.VERCEL
   : path.join(__dirname, 'blog.db');
 
 let db = null;
+let initError = null;
 
 const ready = initSqlJs()
   .then((SQL) => {
@@ -40,12 +40,18 @@ const ready = initSqlJs()
     )`);
   })
   .catch((err) => {
-    console.error('Failed to initialize database:', err);
-    throw err;
+    initError = err;
+    console.error('Failed to initialize database:', err.message);
   });
 
-// Wait for the database before handling any request.
-app.use((req, res, next) => ready.then(() => next()).catch(next));
+// Wait for the database before handling any request. On failure, return a
+// JSON error instead of crashing the process (avoids unhandled rejection).
+app.use((req, res, next) =>
+  ready.then(() => {
+    if (initError) return res.status(503).json({ error: 'Database failed to initialize.' });
+    next();
+  })
+);
 
 function all(sql, params = []) {
   const stmt = db.prepare(sql);

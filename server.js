@@ -3,16 +3,19 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
 
-// Middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Database setup
-const db = new sqlite3.Database('./blog.db', (err) => {
+// SQLite needs a writable location. Vercel serverless functions only allow
+// writes under /tmp (and it is ephemeral - resets on cold start).
+const DB_PATH = process.env.VERCEL
+  ? '/tmp/blog.db'
+  : path.join(__dirname, 'blog.db');
+
+const db = new sqlite3.Database(DB_PATH, (err) => {
   if (err) console.error('Database connection error:', err.message);
-  else console.log('Connected to SQLite database.');
+  else console.log(`Connected to SQLite database (${DB_PATH}).`);
 });
 
 db.run(`CREATE TABLE IF NOT EXISTS posts (
@@ -59,8 +62,7 @@ app.post('/api/posts', requireAuth, (req, res) => {
     return res.status(400).json({ error: 'All fields are required.' });
   }
 
-  const query = 'INSERT INTO posts (title, author, content) VALUES (?, ?, ?)';
-  db.run(query, [title, author, content], function (err) {
+  db.run('INSERT INTO posts (title, author, content) VALUES (?, ?, ?)', [title, author, content], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.status(201).json({ id: this.lastID, title, author, content });
   });
@@ -73,8 +75,7 @@ app.put('/api/posts/:id', requireAuth, (req, res) => {
     return res.status(400).json({ error: 'All fields are required.' });
   }
 
-  const query = 'UPDATE posts SET title = ?, author = ?, content = ? WHERE id = ?';
-  db.run(query, [title, author, content, req.params.id], function (err) {
+  db.run('UPDATE posts SET title = ?, author = ?, content = ? WHERE id = ?', [title, author, content, req.params.id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     if (this.changes === 0) return res.status(404).json({ error: 'Post not found.' });
     res.json({ message: 'Post updated successfully.' });
@@ -90,4 +91,11 @@ app.delete('/api/posts/:id', requireAuth, (req, res) => {
   });
 });
 
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+// Start the server only when run directly (`node server.js`).
+// On Vercel the app is imported and invoked as a serverless function.
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+}
+
+module.exports = app;

@@ -1,0 +1,14 @@
+{
+  "name": "blog-management",
+  "version": "1.0.0",
+  "description": "DevBlog - a simple blog management app (Express + SQLite)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1",
+    "sqlite3": "^6.0.1"
+  }
+}

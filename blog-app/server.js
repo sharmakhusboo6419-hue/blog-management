@@ -3,14 +3,19 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const db = new sqlite3.Database('./blog.db', (err) => {
+// SQLite needs a writable location. Vercel serverless functions only allow
+// writes under /tmp (and it is ephemeral - resets on cold start).
+const DB_PATH = process.env.VERCEL
+  ? '/tmp/blog.db'
+  : path.join(__dirname, 'blog.db');
+
+const db = new sqlite3.Database(DB_PATH, (err) => {
   if (err) console.error('Database connection error:', err.message);
-  else console.log('Connected to SQLite database.');
+  else console.log(`Connected to SQLite database (${DB_PATH}).`);
 });
 
 db.run(`CREATE TABLE IF NOT EXISTS posts (
@@ -76,4 +81,11 @@ app.delete('/api/posts/:id', requireAuth, (req, res) => {
   });
 });
 
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+// Start the server only when run directly (`node server.js`).
+// On Vercel the app is imported and invoked as a serverless function.
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+}
+
+module.exports = app;

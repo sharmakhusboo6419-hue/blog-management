@@ -81,6 +81,17 @@
     .reply-btn { background: none; border: none; color: var(--primary); font-size: 0.8rem; font-weight: 600; cursor: pointer; margin-top: 0.5rem; }
 
     .hidden { display:none !important; }
+    .header-actions{display:flex;align-items:center;gap:1rem;margin-left:auto;}
+    .header-write{display:inline-flex;align-items:center;gap:.45rem;background:var(--coral);color:var(--ink);border:0;padding:.6rem 1.15rem;border-radius:999px;font-size:.85rem;font-weight:800;letter-spacing:.01em;cursor:pointer;transition:transform .18s ease, background .18s ease, box-shadow .18s ease;}
+    .header-write:hover{background:#f08a6f;transform:translateY(-1px);box-shadow:0 8px 18px rgba(231,111,81,.3);}
+    .modal-overlay{position:fixed;inset:0;background:rgba(20,36,58,.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem;}
+    .modal{position:relative;background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--radius);box-shadow:0 25px 60px rgba(20,36,58,.28);padding:2rem;width:100%;max-width:400px;animation:reveal .25s both;}
+    .modal h3{font-size:1.5rem;margin-bottom:.35rem;}
+    .modal p{color:var(--text-muted);font-size:.92rem;margin-bottom:1.1rem;}
+    .modal .actions{margin-top:1.25rem;}
+    .modal-close{position:absolute;top:.85rem;right:.9rem;background:none;border:0;font-size:1rem;color:var(--text-muted);cursor:pointer;}
+    .modal-close:hover{color:var(--ink);}
+    @media(max-width:650px){.header-actions{gap:.6rem;}.switch-container > span:first-child{display:none;}.header-write{padding:.55rem .95rem;font-size:.8rem;}}
     .masthead {position:relative; overflow:hidden; background:var(--ink); color:#fff; padding:clamp(2rem,5vw,4.5rem); border-radius:24px; min-height:310px; display:grid; grid-template-columns:1.35fr .65fr; align-items:center; margin-bottom:2.8rem; box-shadow:0 20px 45px rgba(20,36,58,.16);}.eyebrow{color:#f6a18d; text-transform:uppercase; letter-spacing:.14em; font-size:.7rem; font-weight:700; margin-bottom:1rem;}.masthead h1{font-size:clamp(3rem,7vw,5.8rem); max-width:620px;}.masthead p{color:#ccd5de; max-width:450px;margin-top:1rem;font-size:1.02rem;}.masthead::after{content:'';position:absolute;width:23rem;height:23rem;border:1px solid rgba(255,255,255,.15);border-radius:50%;right:-11rem;top:-8rem;}.orbital{position:relative;height:250px;}.orb{position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,.32);}.orb.one{width:198px;height:198px;right:25px;top:20px;}.orb.two{width:125px;height:125px;right:62px;top:57px;border-color:#f6a18d;}.orbital-card{position:absolute;width:130px;height:84px;background:#f8f6f1;border-radius:8px;box-shadow:0 15px 28px rgba(0,0,0,.25);right:60px;top:77px;transform:rotate(-10deg);padding:14px;color:var(--ink);}.orbital-card::before,.orbital-card::after{content:'';display:block;height:5px;background:#394cb5;margin-bottom:7px;width:65%;}.orbital-card::after{background:#e76f51;width:45%;}.orb-dot{position:absolute;width:16px;height:16px;border-radius:50%;background:var(--coral);right:15px;top:40px;box-shadow:0 0 0 8px rgba(231,111,81,.15);}.section-head{display:flex;justify-content:space-between;align-items:end;margin:0 0 .9rem;}.section-kicker{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text-muted);font-weight:700;}.post-card{position:relative;overflow:hidden;padding:1.7rem 1.8rem 1.5rem;transition:transform .2s,box-shadow .2s;border-left:5px solid transparent;}.post-card:hover{transform:translateX(5px);box-shadow:0 18px 36px rgba(20,36,58,.12);border-left-color:var(--coral);}.post-card p{color:var(--text-muted);margin-bottom:1.25rem;max-width:72ch;}.empty-state{text-align:center;padding:3.5rem 1.5rem;color:var(--text-muted);}.empty-state strong{display:block;color:var(--ink);font-family:'DM Serif Display',serif;font-size:1.7rem;font-weight:400;margin-bottom:.5rem;}#formSection,#detailSection{max-width:880px;margin-inline:auto;}#formSection h2{margin-bottom:1.5rem;}@keyframes reveal{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}.masthead,.section-head,.filter-bar,#postsList{animation:reveal .55s both;}#postsList{animation-delay:.12s;}@media(max-width:650px){header{padding:.85rem 1.1rem;gap:.75rem;}.brand{min-width:0;}.switch-container{flex-shrink:0;white-space:nowrap;}.switch-container > span:first-child{font-size:.7rem;letter-spacing:.035em;}.container{margin-top:1.25rem;padding:0 1rem;}.masthead{grid-template-columns:1fr;min-height:unset;padding:2rem 1.55rem;}.masthead h1{font-size:3.25rem;}.orbital{width:230px;height:158px;transform:scale(.68);transform-origin:top left;margin:.6rem 0 -12px;}.section-head{align-items:center;}.post-card{padding:1.35rem;}.card{padding:1.35rem;}.actions{flex-wrap:wrap;}.comment-item.reply{margin-left:.7rem;}}
   </style>
 </head>
@@ -88,10 +99,13 @@
 
   <header>
     <div class="brand" onclick="showHomeView()"><div class="brand-icon" aria-hidden="true">D</div><span>DevBlog</span></div>
-    <label class="switch-container">
-      <span>Admin Mode</span>
-      <div class="switch"><input type="checkbox" id="authCheck" onchange="toggleAuth()"><span class="slider"></span></div>
-    </label>
+    <div class="header-actions">
+      <button type="button" id="writeBtn" class="header-write" onclick="openWrite()">✎ Write</button>
+      <label class="switch-container">
+        <span>Admin Mode</span>
+        <div class="switch"><input type="checkbox" id="authCheck" onchange="toggleAuth()"><span class="slider"></span></div>
+      </label>
+    </div>
   </header>
 
   <div class="container">
@@ -184,16 +198,71 @@
 
   </div>
 
+  <!-- Admin unlock modal -->
+  <div id="adminModal" class="modal-overlay hidden">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="adminModalTitle">
+      <button type="button" class="modal-close" onclick="cancelAdminModal()" aria-label="Close">✕</button>
+      <h3 id="adminModalTitle">Admin access</h3>
+      <p>Enter your admin token to start writing.</p>
+      <input type="password" id="adminToken" placeholder="Admin token" onkeydown="if(event.key==='Enter')submitAdminToken()">
+      <p id="adminError" class="hidden" style="color:var(--danger);font-size:.85rem;margin-top:.5rem;margin-bottom:0;">Incorrect token. Please try again.</p>
+      <div class="actions">
+        <button type="button" class="btn" onclick="submitAdminToken()">Unlock</button>
+        <button type="button" class="btn btn-secondary" onclick="cancelAdminModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let isAuthorized = false;
     let currentPostId = null;
     let activeTag = '';
     let searchTimeout = null;
     const API_URL = '/api/posts';
+    const ADMIN_TOKEN = 'secret-admin-token';
 
     function toggleAuth() {
       isAuthorized = document.getElementById('authCheck').checked;
+      if (isAuthorized) sessionStorage.setItem('devblog_admin', '1');
+      else sessionStorage.removeItem('devblog_admin');
       renderApp();
+    }
+
+    function restoreAuth() {
+      if (sessionStorage.getItem('devblog_admin') === '1') {
+        isAuthorized = true;
+        document.getElementById('authCheck').checked = true;
+      }
+    }
+
+    function openWrite() {
+      if (isAuthorized) {
+        showFormView();
+        return;
+      }
+      document.getElementById('adminToken').value = '';
+      document.getElementById('adminError').classList.add('hidden');
+      document.getElementById('adminModal').classList.remove('hidden');
+      document.getElementById('adminToken').focus();
+    }
+
+    function submitAdminToken() {
+      const token = document.getElementById('adminToken').value.trim();
+      if (token !== ADMIN_TOKEN) {
+        document.getElementById('adminError').classList.remove('hidden');
+        return;
+      }
+      isAuthorized = true;
+      document.getElementById('authCheck').checked = true;
+      sessionStorage.setItem('devblog_admin', '1');
+      document.getElementById('adminModal').classList.add('hidden');
+      renderApp();
+      showFormView();
+    }
+
+    function cancelAdminModal() {
+      document.getElementById('adminModal').classList.add('hidden');
+      document.getElementById('adminError').classList.add('hidden');
     }
 
     function getAuthHeaders() {
@@ -439,6 +508,7 @@
       return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
     }
 
+    restoreAuth();
     renderApp();
   </script>
 </body>

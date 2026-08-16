@@ -13,13 +13,14 @@
       --text-main: #14243a; --text-muted: #647182; --primary: #394cb5; --primary-hover: #263a9e;
       --coral: #e76f51; --danger: #bf3f3f; --danger-hover: #9e3030; --secondary: #e7edf0;
       --secondary-hover: #d7e2e6; --secondary-text: #284254; --border-color: #dedbd2;
+      --ai-purple: #7c3aed; --ai-purple-hover: #6d28d9; --ai-bg: #f3e8ff; --ai-border: #d8b4fe;
       --sage: #dce8dd; --sky: #e0ecf1; --radius: 18px; --shadow: 0 15px 40px rgba(20,36,58,.08);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: radial-gradient(circle at 91% 7%, #e6eef0 0, transparent 22rem), radial-gradient(circle at 8% 38%, #f1e7dc 0, transparent 24rem), var(--paper); color: var(--text-main); font-family: 'DM Sans', sans-serif; line-height: 1.6; min-height:100vh; }
     header { background: var(--ink); color: #fff; padding: .95rem max(1.25rem, calc((100vw - 1180px)/2)); display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:100; border-bottom:1px solid rgba(255,255,255,.12); }
-    .brand { display:flex; align-items:center; gap:.7rem; font-size:1.15rem; font-weight:700; letter-spacing:-.03em; }
+    .brand { display:flex; align-items:center; gap:.7rem; font-size:1.15rem; font-weight:700; letter-spacing:-.03em; cursor:pointer; }
     .brand-icon { width:34px; height:34px; background:var(--coral); color:var(--ink); border-radius:50% 50% 50% 10%; display:flex; align-items:center; justify-content:center; transform:rotate(-8deg); font-size:1rem; }
 
     .switch-container { display:flex; align-items:center; gap:.7rem; font-size:.78rem; color:#d2d8df; cursor:pointer; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
@@ -34,18 +35,20 @@
     .card { background:var(--card-bg); border-radius:var(--radius); padding:2rem; margin-bottom:1rem; border:1px solid var(--border-color); box-shadow:var(--shadow); }
     h1,h2,h3 { font-family:'DM Serif Display', Georgia, serif; font-weight:400; line-height:1.03; letter-spacing:-.035em; } h2 {font-size:2rem;} h3{font-size:1.45rem;}
     
-    .btn { display:inline-flex; align-items:center; gap:.5rem; background:var(--primary); color:#fff; border:0; padding:.7rem 1.1rem; border-radius:8px; font-size:.82rem; font-weight:700; cursor:pointer; transition:transform .18s ease, background .18s ease, box-shadow .18s ease; }
+    .btn { display:inline-flex; align-items:center; gap:.5rem; background:var(--primary); color:#fff; border:0; padding:.7rem 1.1rem; border-radius:8px; font-size:.82rem; font-weight:700; cursor:pointer; transition:transform .18s ease, background .18s ease, box-shadow .18s ease; text-decoration:none; }
     .btn:hover { background:var(--primary-hover); transform:translateY(-2px); box-shadow:0 7px 16px rgba(57,76,181,.22); }
     .btn-danger { background: var(--danger); }
-    .btn-danger:hover { background: var(--danger-hover); }
+    .btn-danger:hover { background: var(--danger-hover); box-shadow: 0 7px 16px rgba(191,63,63,.22); }
     .btn-secondary { background: var(--secondary); color: var(--secondary-text); }
-    .btn-secondary:hover { background: var(--secondary-hover); }
+    .btn-secondary:hover { background: var(--secondary-hover); box-shadow: none; }
+    .btn-ai { background: var(--ai-purple); color: #fff; }
+    .btn-ai:hover { background: var(--ai-purple-hover); box-shadow: 0 7px 16px rgba(124,58,237,.25); }
 
     form { display:flex; flex-direction:column; gap:1rem; } input[type="text"],textarea {padding:.8rem 1rem; border:1px solid #ccd1d0; border-radius:8px; font-size:.95rem; font-family:inherit; width:100%; background:#fffefa; color:var(--ink); transition:border-color .15s, box-shadow .15s;} input:focus,textarea:focus,.btn:focus-visible {outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(57,76,181,.16);}
     
     .hp-field { display: none !important; }
 
-    .actions { display: flex; gap: 0.75rem; margin-top: 0.5rem; align-items: center; }
+    .actions { display: flex; gap: 0.75rem; margin-top: 0.5rem; align-items: center; flex-wrap: wrap; }
     .meta-badge { display:flex; gap:.75rem; font-size:.8rem; color:var(--text-muted); margin-bottom:.85rem; align-items:center; flex-wrap:wrap; } .stat-pill {background:var(--sky); padding:.22rem .6rem; border-radius:20px; font-weight:700; color:#35506a;}
 
     /* Search & Filter Bar */
@@ -75,6 +78,8 @@
     }
     .clear-filter-btn { background: none; border: none; color: var(--danger); font-weight: 700; cursor: pointer; }
 
+    .ai-box { background: var(--ai-bg); border: 1px solid var(--ai-border); border-radius: 8px; padding: 1rem; font-size: 0.875rem; color: #581c87; margin-top: 0.5rem; }
+
     .comments-section {margin-top:2.5rem; border-top:1px solid var(--border-color); padding-top:1.5rem;} .comment-item{background:#faf9f5;border:1px solid var(--border-color);border-radius:10px;padding:1rem;margin-top:1rem;}.comment-item.reply{margin-left:2rem;border-left:3px solid var(--coral);}
     .comment-meta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; display: flex; justify-content: space-between; }
     .reply-btn { background: none; border: none; color: var(--primary); font-size: 0.8rem; font-weight: 600; cursor: pointer; margin-top: 0.5rem; }
@@ -86,7 +91,7 @@
 <body>
 
   <header>
-    <div class="brand"><div class="brand-icon" aria-hidden="true">D</div><span>DevBlog</span></div>
+    <div class="brand" onclick="showHomeView()"><div class="brand-icon" aria-hidden="true">D</div><span>DevBlog</span></div>
     <label class="switch-container">
       <span>Admin Mode</span>
       <div class="switch"><input type="checkbox" id="authCheck" onchange="toggleAuth()"><span class="slider"></span></div>
@@ -102,10 +107,23 @@
         <input type="hidden" id="postId">
         <input type="text" id="postTitle" placeholder="Title" required>
         <input type="text" id="postAuthor" placeholder="Author" required>
+        
+        <div>
+          <textarea id="postContent" rows="7" placeholder="Write article content here..." required></textarea>
+          <div style="margin-top: 0.5rem;">
+            <button type="button" class="btn btn-ai" id="aiBtn" onclick="generateAISummaryAndTags()">🤖 Auto-Generate AI Tags & Summary</button>
+          </div>
+        </div>
+
+        <div id="aiSummaryBox" class="ai-box hidden">
+          <strong>✨ AI Generated 2-Sentence Summary:</strong>
+          <p id="aiSummaryText" style="margin-top: 0.25rem; color: #4c1d95;"></p>
+        </div>
+
         <input type="text" id="postTags" placeholder="Tags (comma separated, e.g. webdev, design, nodejs)">
-        <textarea id="postContent" rows="6" placeholder="Content..." required></textarea>
+
         <div class="actions">
-          <button type="submit" class="btn">Save</button>
+          <button type="submit" class="btn">Save Article</button>
           <button type="button" class="btn btn-secondary" onclick="showHomeView()">Cancel</button>
         </div>
       </form>
@@ -195,6 +213,46 @@
     function getAuthHeaders() {
       return isAuthorized ? { 'Authorization': 'Bearer secret-admin-token', 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
     }
+
+    // --- AI Generator Trigger ---
+
+    async function generateAISummaryAndTags() {
+      const content = document.getElementById('postContent').value;
+      const aiBtn = document.getElementById('aiBtn');
+
+      if (!content || content.trim().length < 20) {
+        alert('Please enter at least a few sentences of article content before generating AI tags and summary.');
+        return;
+      }
+
+      aiBtn.innerText = '⚡ Processing with AI...';
+      aiBtn.disabled = true;
+
+      try {
+        const res = await fetch('/api/ai/generate', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ content })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('postTags').value = data.tags;
+          document.getElementById('aiSummaryText').innerText = data.summary;
+          document.getElementById('aiSummaryBox').classList.remove('hidden');
+        } else {
+          const errData = await res.json();
+          alert(errData.error || 'Failed to generate summary.');
+        }
+      } catch (err) {
+        alert('AI generation request failed.');
+      } finally {
+        aiBtn.innerText = '🤖 Auto-Generate AI Tags & Summary';
+        aiBtn.disabled = false;
+      }
+    }
+
+    // --- Search & Filters ---
 
     function handleSearchInput() {
       clearTimeout(searchTimeout);
@@ -364,6 +422,7 @@
       document.getElementById('homeSection').classList.add('hidden');
       document.getElementById('detailSection').classList.add('hidden');
       document.getElementById('formSection').classList.remove('hidden');
+      document.getElementById('aiSummaryBox').classList.add('hidden');
 
       if (post) {
         document.getElementById('formTitle').innerText = 'Edit Article';
